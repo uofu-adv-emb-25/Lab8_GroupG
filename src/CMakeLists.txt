@@ -1,3 +1,5 @@
+include("../can2040/can2040.cmake")
+
 # This is the main binary. List your C files here.
 add_executable(hello_freertos
     hello_freertos.c
