@@ -3,11 +3,28 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
 
+#include <queue.h>
+#include "fifo.h"
+
+#define TRANSMIT 1
+#define RECEIVE 0
+
 static struct can2040 cbus;
+QueueHandle_t response;
+
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
-    // Put your code here....
+    if (notify == CAN2040_NOTIFY_ERROR) {
+        
+    }
+    
+    if (notify == CAN2040_NOTIFY_RX) {
+        #warning "PORT MAX DELAY HERE"
+        xQueueSendToBack(response, *msg, portMAX_DELAY); 
+    } else if (notify == CAN2040_NOTIFY_TX) {
+
+    }
 }
 
 static void PIOx_IRQHandler(void)
@@ -20,6 +37,8 @@ void canbus_setup(void)
     uint32_t pio_num = 0;
     uint32_t sys_clock = 125000000, bitrate = 500000;
     uint32_t gpio_rx = 4, gpio_tx = 5;
+
+    response = xQueueCreate(100, sizeof(struct can2040_msg));
 
     // Setup canbus
     can2040_setup(&cbus, pio_num);
