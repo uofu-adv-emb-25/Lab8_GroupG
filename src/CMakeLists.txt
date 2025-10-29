@@ -1,3 +1,4 @@
+set(CAN_PATH "../can2040")
 include("../can2040/can2040.cmake")
 
 # This is the main binary. List your C files here.
