@@ -6,9 +6,6 @@
 #include <queue.h>
 #include "fifo.h"
 
-#define TRANSMIT 1
-#define RECEIVE 0
-
 static struct can2040 cbus;
 QueueHandle_t response;
 
