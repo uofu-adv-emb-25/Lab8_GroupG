@@ -14,12 +14,13 @@
 #include "pico/cyw43_arch.h"
 
 #include <can2040.h>
-#include <queue.h>
-#include "fifo.h"
 
 int count = 0;
 static struct can2040 cbus;
+QueueHandle_t msgs;
 
+#define RECEIVE_TASK_PRIORITY      ( tskIDLE_PRIORITY + 1UL )
+#define RECEIVE_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 #define TRANSMIT_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 #define DELAY_MS 1000
@@ -57,8 +58,17 @@ void canbus_setup(void)
     can2040_start(&cbus, sys_clock, bitrate, gpio_rx, gpio_tx);
 }
 
+void receive_task(__unused void *params) {
+    struct can2040_msg msg;
+
+    while (true) {
+        xQueueReceive(msgs, &msg, portMAX_DELAY);
+        printf("MSG #%d\n", msg.id);
+    }
+}
+
 void transmit_task(__unused void *params) {
-    struct can2040_msg msg = {0, 8, {1, 2}};
+    struct can2040_msg msg = {0, 0, {1, 2}};
 
     while (true) {
         if (can2040_check_transmit(cbus))
@@ -74,11 +84,15 @@ int main( void )
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
+    msgs = xQueueCreate(100, sizeof(struct can2040_msg));
     canbus_setup();
-    
-    TaskHandle_t task;
+
+    TaskHandle_t task1, task2;
+    xTaskCreate(receive_task, "ReceiveThread",
+                RECEIVE_TASK_STACK_SIZE, NULL, RECEIVE_TASK_PRIORITY, &task1);
+
     xTaskCreate(transmit_task, "TransmitThread",
-                TRANSMIT_TASK_STACK_SIZE, NULL, TRANSMIT_TASK_PRIORITY, &task);
+                TRANSMIT_TASK_STACK_SIZE, NULL, TRANSMIT_TASK_PRIORITY, &task2);
 
     vTaskStartScheduler();
     return 0;
