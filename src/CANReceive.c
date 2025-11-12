@@ -60,7 +60,7 @@ void receive_task(__unused void *params) {
     printf("Receiving\n");
     while (true) {
         xQueueReceive(msgs, &msg, portMAX_DELAY);
-        printf("MSG #%d\n", msg.id);
+        printf("MSG data: %d\n", msg.data32[0]);
     }
 }
 
