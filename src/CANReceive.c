@@ -13,7 +13,8 @@
 #include "pico/multicore.h"
 #include "pico/cyw43_arch.h"
 
-#include <can2040.h>
+#include <../can2040/src/can2040.h>
+#include <queue.h>
 
 int count = 0;
 static struct can2040 cbus;
@@ -25,7 +26,7 @@ QueueHandle_t msgs;
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
     if (notify == CAN2040_NOTIFY_RX) {
-        xQueueSendToBack(msgs, *msg, portMAX_DELAY); 
+        xQueueSendToBack(msgs, msg, portMAX_DELAY); 
     }
 }
 
@@ -38,7 +39,7 @@ void canbus_setup(void)
 {
     uint32_t pio_num = 0;
     uint32_t sys_clock = 125000000, bitrate = 500000;
-    uint32_t gpio_rx = 4, gpio_tx = 5;
+    uint32_t gpio_rx = 16, gpio_tx = 17;
 
     // Setup canbus
     can2040_setup(&cbus, pio_num);
@@ -56,6 +57,7 @@ void canbus_setup(void)
 void receive_task(__unused void *params) {
     struct can2040_msg msg;
 
+    printf("Receiving\n");
     while (true) {
         xQueueReceive(msgs, &msg, portMAX_DELAY);
         printf("MSG #%d\n", msg.id);
@@ -68,8 +70,12 @@ int main( void )
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
+    sleep_ms(5000);
+
     msgs = xQueueCreate(100, sizeof(struct can2040_msg));
     canbus_setup();
+
+    printf("Receive Setup Canbus\n");
 
     TaskHandle_t task;
     xTaskCreate(receive_task, "ReceiveThread",

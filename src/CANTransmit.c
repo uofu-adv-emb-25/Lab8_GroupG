@@ -13,9 +13,8 @@
 #include "pico/multicore.h"
 #include "pico/cyw43_arch.h"
 
-#include <can2040.h>
+#include <../can2040/src/can2040.h>
 #include <queue.h>
-#include "fifo.h"
 
 int count = 0;
 static struct can2040 cbus;
@@ -24,10 +23,12 @@ static struct can2040 cbus;
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 #define DELAY_MS 1000
 
+#define GPIO_PIN 0
+int state = 1;
+
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
     if (notify == CAN2040_NOTIFY_RX) {
-        xQueueSendToBack(msgs, *msg, portMAX_DELAY); 
     } else if (notify == CAN2040_NOTIFY_TX) {
 
     }
@@ -42,7 +43,7 @@ void canbus_setup(void)
 {
     uint32_t pio_num = 0;
     uint32_t sys_clock = 125000000, bitrate = 500000;
-    uint32_t gpio_rx = 4, gpio_tx = 5;
+    uint32_t gpio_rx = 16, gpio_tx = 17;
 
     // Setup canbus
     can2040_setup(&cbus, pio_num);
@@ -58,13 +59,21 @@ void canbus_setup(void)
 }
 
 void transmit_task(__unused void *params) {
-    struct can2040_msg msg = {0, 8, {1, 2}};
+    struct can2040_msg msg;
+    msg.data32[0] = 0;
+    msg.data32[1] = 0;
+    msg.dlc = 8;
+    msg.id = 1;
 
     while (true) {
-        if (can2040_check_transmit(cbus))
+        if (can2040_check_transmit(&cbus)){
             can2040_transmit(&cbus, &msg);
-        msg.id++;
-        sleep_ms(DELAY_MS);
+            gpio_put(GPIO_PIN, state);
+            state = !state;
+            printf("Sent\n");
+        }
+        msg.data32[0]++;
+        vTaskDelay(pdMS_TO_TICKS(DELAY_MS));
     }
 }
 
@@ -74,8 +83,14 @@ int main( void )
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
+    sleep_ms(5000);
+
     canbus_setup();
     
+    printf("Transmit Setup Can bus\n");
+
+    gpio_init(GPIO_PIN);
+
     TaskHandle_t task;
     xTaskCreate(transmit_task, "TransmitThread",
                 TRANSMIT_TASK_STACK_SIZE, NULL, TRANSMIT_TASK_PRIORITY, &task);

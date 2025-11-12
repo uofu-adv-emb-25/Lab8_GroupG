@@ -1,6 +1,3 @@
-set(CAN_PATH "../can2040")
-include("../can2040/can2040.cmake")
-
 # This is the main binary. List your C files here.
 add_executable(CANTransmit
     CANTransmit.c
@@ -19,6 +16,7 @@ target_link_libraries(CANTransmit PRIVATE
   pico_stdlib
   pico_multicore
   pico_async_context_freertos
+  can2040
   FreeRTOS-Kernel-Heap4
 )
 
@@ -33,13 +31,6 @@ endif()
 
 # Another pico macro which generates the uf2 file in addition to the elf
 pico_add_extra_outputs(CANTransmit)
-
-find_program(OPENOCD openocd)
-find_program(PICOTOOL picotool)
-
-add_custom_target(flash ${PICOTOOL} load -f $<TARGET_FILE:CANTransmit> DEPENDS CANTransmit)
-
-add_custom_target(openocd_flash ${OPENOCD} -s ${OPENOCD_PATH} -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c 'adapter speed 5000; program "$<TARGET_FILE:CANTransmit>" verify reset exit' DEPENDS CANTransmit)
 
 # ---------------------------------------------- 
 
@@ -61,6 +52,7 @@ target_link_libraries(CANReceive PRIVATE
   pico_stdlib
   pico_multicore
   pico_async_context_freertos
+  can2040
   FreeRTOS-Kernel-Heap4
 )
 
@@ -75,13 +67,6 @@ endif()
 
 # Another pico macro which generates the uf2 file in addition to the elf
 pico_add_extra_outputs(CANReceive)
-
-find_program(OPENOCD openocd)
-find_program(PICOTOOL picotool)
-
-add_custom_target(flash ${PICOTOOL} load -f $<TARGET_FILE:CANReceive> DEPENDS CANReceive)
-
-add_custom_target(openocd_flash ${OPENOCD} -s ${OPENOCD_PATH} -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c 'adapter speed 5000; program "$<TARGET_FILE:CANReceive>" verify reset exit' DEPENDS CANReceive)
 
 # ---------------------------------------------- 
 
@@ -103,6 +88,7 @@ target_link_libraries(CANCombine PRIVATE
   pico_stdlib
   pico_multicore
   pico_async_context_freertos
+  can2040
   FreeRTOS-Kernel-Heap4
 )
 
@@ -117,11 +103,3 @@ endif()
 
 # Another pico macro which generates the uf2 file in addition to the elf
 pico_add_extra_outputs(CANCombine)
-
-find_program(OPENOCD openocd)
-find_program(PICOTOOL picotool)
-
-add_custom_target(flash ${PICOTOOL} load -f $<TARGET_FILE:CANCombine> DEPENDS CANCombine)
-
-add_custom_target(openocd_flash ${OPENOCD} -s ${OPENOCD_PATH} -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c 'adapter speed 5000; program "$<TARGET_FILE:CANCombine>" verify reset exit' DEPENDS CANCombine)
-
