@@ -18,16 +18,14 @@
 
 int count = 0;
 static struct can2040 cbus;
+QueueHandle_t msgs;
 
 #define TRANSMIT_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
-    if (notify == CAN2040_NOTIFY_RX) {
-    } else if (notify == CAN2040_NOTIFY_TX) {
-
-    }
+    xQueueSendFromISR(msgs, msg, NULL); 
 }
 
 static void PIOx_IRQHandler(void)
@@ -79,7 +77,8 @@ int main( void )
 
     sleep_ms(5000);
 
-    
+    msgs = xQueueCreate(64, sizeof(struct can2040_msg));
+
     printf("Transmit Setup Can bus\n");
 
     TaskHandle_t task;

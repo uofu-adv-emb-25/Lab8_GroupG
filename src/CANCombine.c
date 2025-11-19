@@ -25,7 +25,7 @@ QueueHandle_t msgs;
 #define TRANSMIT_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 
-#define HIGH_PRIORITY 1
+#define HIGH_PRIORITY 0
 #if HIGH_PRIORITY
     int DELAY_MS = 1;
     uint32_t id = 1;
@@ -36,11 +36,7 @@ QueueHandle_t msgs;
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
-    if (notify == CAN2040_NOTIFY_RX) {
-        xQueueSendToBack(msgs, msg, portMAX_DELAY); 
-    } else if (notify == CAN2040_NOTIFY_TX) {
-
-    }
+    xQueueSendFromISR(msgs, msg, NULL); 
 }
 
 static void PIOx_IRQHandler(void)
@@ -72,7 +68,7 @@ void receive_task(__unused void *params) {
 
     while (true) {
         xQueueReceive(msgs, &msg, portMAX_DELAY);
-        printf("MSG data: \n", msg.data32[1]);
+        printf("MSG data: %d\n", msg.data32[1]);
     }
 }
 
@@ -85,7 +81,6 @@ void transmit_task(__unused void *params) {
 
     while (true) {
         can2040_transmit(&cbus, &msg);
-        printf("Sent\n");
         msg.data32[0]++;
         vTaskDelay(DELAY_MS);
     }
@@ -110,5 +105,4 @@ int main( void )
 
     vTaskStartScheduler();
     while (1);
-    return 0;
 }

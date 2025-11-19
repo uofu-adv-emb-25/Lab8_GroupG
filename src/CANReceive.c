@@ -25,9 +25,7 @@ QueueHandle_t msgs;
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
-    // if (notify == CAN2040_NOTIFY_RX) {
-        xQueueSendToBack(msgs, msg, portMAX_DELAY); 
-    // }
+    xQueueSendFromISR(msgs, msg, NULL); 
 }
 
 static void PIOx_IRQHandler(void)
