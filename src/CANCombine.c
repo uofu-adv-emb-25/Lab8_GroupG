@@ -24,8 +24,6 @@ QueueHandle_t msgs;
 #define RECEIVE_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
 #define TRANSMIT_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
-#define GPIO_PIN 0
-int state = 1;
 
 #define HIGH_PRIORITY 1
 #if HIGH_PRIORITY
@@ -86,25 +84,22 @@ void transmit_task(__unused void *params) {
     msg.id = id;
 
     while (true) {
-        if (can2040_check_transmit(&cbus)){
-            can2040_transmit(&cbus, &msg);
-            gpio_put(GPIO_PIN, state);
-            state = !state;
-            printf("Sent\n");
-        }
+        can2040_transmit(&cbus, &msg);
+        printf("Sent\n");
         msg.data32[0]++;
-        vTaskDelay(pdMS_TO_TICKS(DELAY_MS));
+        vTaskDelay(DELAY_MS);
     }
 }
 
 int main( void )
 {
     stdio_init_all();
+    canbus_setup();
+
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
-    msgs = xQueueCreate(100, sizeof(struct can2040_msg));
-    canbus_setup();
+    msgs = xQueueCreate(64, sizeof(struct can2040_msg));
 
     TaskHandle_t task1, task2;
     xTaskCreate(receive_task, "ReceiveThread",
@@ -114,5 +109,6 @@ int main( void )
                 TRANSMIT_TASK_STACK_SIZE, NULL, TRANSMIT_TASK_PRIORITY, &task2);
 
     vTaskStartScheduler();
+    while (1);
     return 0;
 }

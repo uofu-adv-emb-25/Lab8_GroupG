@@ -21,10 +21,6 @@ static struct can2040 cbus;
 
 #define TRANSMIT_TASK_PRIORITY     ( tskIDLE_PRIORITY + 1UL )
 #define TRANSMIT_TASK_STACK_SIZE configMINIMAL_STACK_SIZE
-#define DELAY_MS 1000
-
-#define GPIO_PIN 0
-int state = 1;
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
@@ -66,35 +62,31 @@ void transmit_task(__unused void *params) {
     msg.id = 1;
 
     while (true) {
-        if (can2040_check_transmit(&cbus)){
-            can2040_transmit(&cbus, &msg);
-            gpio_put(GPIO_PIN, state);
-            state = !state;
-            printf("Sent\n");
-        }
+        can2040_transmit(&cbus, &msg);
+        printf("Sent\n");
         msg.data32[0]++;
-        vTaskDelay(pdMS_TO_TICKS(DELAY_MS));
+        sleep_ms(1000);
     }
 }
 
 int main( void )
 {
     stdio_init_all();
+    canbus_setup();
+
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
     sleep_ms(5000);
 
-    canbus_setup();
     
     printf("Transmit Setup Can bus\n");
-
-    gpio_init(GPIO_PIN);
 
     TaskHandle_t task;
     xTaskCreate(transmit_task, "TransmitThread",
                 TRANSMIT_TASK_STACK_SIZE, NULL, TRANSMIT_TASK_PRIORITY, &task);
 
     vTaskStartScheduler();
+    while (1);
     return 0;
 }

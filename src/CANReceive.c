@@ -25,9 +25,9 @@ QueueHandle_t msgs;
 
 static void can2040_cb(struct can2040 *cd, uint32_t notify, struct can2040_msg *msg)
 {
-    if (notify == CAN2040_NOTIFY_RX) {
+    // if (notify == CAN2040_NOTIFY_RX) {
         xQueueSendToBack(msgs, msg, portMAX_DELAY); 
-    }
+    // }
 }
 
 static void PIOx_IRQHandler(void)
@@ -67,13 +67,14 @@ void receive_task(__unused void *params) {
 int main( void )
 {
     stdio_init_all();
+    canbus_setup();
+
     const char *rtos_name;
     rtos_name = "FreeRTOS";
 
     sleep_ms(5000);
 
-    msgs = xQueueCreate(100, sizeof(struct can2040_msg));
-    canbus_setup();
+    msgs = xQueueCreate(64, sizeof(struct can2040_msg));
 
     printf("Receive Setup Canbus\n");
 
@@ -82,5 +83,6 @@ int main( void )
                 RECEIVE_TASK_STACK_SIZE, NULL, RECEIVE_TASK_PRIORITY, &task);
 
     vTaskStartScheduler();
+    while (1);
     return 0;
 }
