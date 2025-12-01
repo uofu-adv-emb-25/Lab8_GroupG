@@ -1,10 +1,8 @@
-# Renode setup
-The Raspberry Pico needs configuration files for Renode to work properly.
+# Lab 8
+Lab 8 for Luke and James
 
-* On MacOS, the installation location is `/Applications/Renode.app/Contents/MacOs`
-* On Linux, the location for Debian, Fedora, and Arch is `/opt/renode`
-* On Windows, the location is `C://Program Files/Renode`
+## Observations
+We used an id of 1 with a 1ms delay on one board and an id of 4 with a 1000ms delay on the other. We found that the low priority broadcasted the expected amount: ~10 transmissions for 10,000 total transmissions, likely because there is enough delay for the low priority to fit in becasue the transission took about 200us. At low delays, the low priority message wouldn't fit in.
 
-To add the Pico configuration files:
-1. Copy `rp2040_spinlock.py` and `rp2040_divider.py` to the `scripts/pydev` directory of your Renode installation.
-1. Copy `rpi_pico_rp2040_w.repl` to the `platforms/cpus` directory.
+## Oscilloscope image
+![scopeOutput](lab8pic.jpg)

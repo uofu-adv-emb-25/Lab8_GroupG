@@ -71,6 +71,9 @@ add_compile_definitions(
     PICO_ENTER_USB_BOOT_ON_EXIT=1
     )
 
+set(CAN_PATH "./can2040")
+include("./can2040/can2040.cmake")
+
 # This is where your project header files are located.
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
 
